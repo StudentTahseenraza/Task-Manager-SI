@@ -16,9 +16,12 @@
 
 ## 🔐 Demo Credentials
 
-| Role       | Email                                               | Password    |
-| ---------- | --------------------------------------------------- | ----------- |
-|  Admin     | [admin@example.com](mailto:admin@example.com)       | Admin123     |
+| Role        | Email                  | Password     |
+|-------------|------------------------|--------------|
+| 👑 Admin    | admin@taskflow.com     | Admin@123    |
+| 📊 Manager  | manager@taskflow.com   | Manager@123  |
+| 👤 User     | user@taskflow.com      | User@123     |
+| 👁️ Viewer   | viewer@taskflow.com    | Viewer@123   |
 
 
 ---
