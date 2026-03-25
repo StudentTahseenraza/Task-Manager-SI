@@ -27,12 +27,32 @@ app.use(express.urlencoded({ extended: true }));
 // Security middleware
 app.use(helmet());
 
-// CORS
-app.use(cors({
-  origin: process.env.NODE_ENV === 'development' 
-    ? process.env.FRONTEND_URL 
-    : 'http://localhost:5173',
-  credentials: true
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',  // Vite default
+    'http://localhost:5000',  // Backend itself
+    'https://task-manager-si-delta.vercel.app',  // Production frontend
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
 // Logging
