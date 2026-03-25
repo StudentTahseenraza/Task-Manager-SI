@@ -19,8 +19,8 @@ const fixDemoUsers = async () => {
     await mongoose.connect(mongoURI);
     console.log('✅ Connected to MongoDB\n');
 
-    // Delete all existing demo users
-    console.log('🗑️  Removing all demo users...');
+    // Delete existing demo users
+    console.log('🗑️  Removing existing demo users...');
     await User.deleteMany({ 
       email: { 
         $in: [
@@ -33,14 +33,14 @@ const fixDemoUsers = async () => {
     });
     console.log('✅ Demo users removed\n');
 
-    // Create fresh demo users with proper password hashing
-    console.log('📝 Creating fresh demo users with proper passwords...\n');
+    // Create fresh demo users
+    console.log('📝 Creating fresh demo users...\n');
     
     const demoUsers = [
       {
         name: 'Admin User',
         email: 'admin@taskflow.com',
-        password: 'Admin@123',
+        plainPassword: 'Admin@123',
         role: 'admin',
         department: 'IT',
         isActive: true
@@ -48,7 +48,7 @@ const fixDemoUsers = async () => {
       {
         name: 'Manager User',
         email: 'manager@taskflow.com',
-        password: 'Manager@123',
+        plainPassword: 'Manager@123',
         role: 'manager',
         department: 'Engineering',
         isActive: true
@@ -56,7 +56,7 @@ const fixDemoUsers = async () => {
       {
         name: 'Regular User',
         email: 'user@taskflow.com',
-        password: 'User@123',
+        plainPassword: 'User@123',
         role: 'user',
         department: 'Sales',
         isActive: true
@@ -64,56 +64,51 @@ const fixDemoUsers = async () => {
       {
         name: 'Viewer User',
         email: 'viewer@taskflow.com',
-        password: 'Viewer@123',
+        plainPassword: 'Viewer@123',
         role: 'viewer',
         department: 'Marketing',
         isActive: true
       }
     ];
     
-    // Create users with proper password hashing
     for (const userData of demoUsers) {
       // Hash password with bcrypt
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(userData.password, salt);
+      const hashedPassword = await bcrypt.hash(userData.plainPassword, salt);
       
       const user = await User.create({
-        ...userData,
-        password: hashedPassword
+        name: userData.name,
+        email: userData.email,
+        password: hashedPassword,
+        role: userData.role,
+        department: userData.department,
+        isActive: userData.isActive
       });
       
       console.log(`✅ Created ${userData.role}: ${userData.email}`);
       
-      // Test the password immediately
-      const isValid = await bcrypt.compare(userData.password, user.password);
-      console.log(`   Password test: ${isValid ? '✓ Working' : '✗ Failed'}\n`);
-    }
-    
-    // Also ensure admin@example.com has admin role
-    const existingAdmin = await User.findOne({ email: 'admin@example.com' });
-    if (existingAdmin) {
-      existingAdmin.role = 'admin';
-      await existingAdmin.save();
-      console.log('✅ Updated admin@example.com to admin role');
+      // Test password verification immediately
+      const isValid = await bcrypt.compare(userData.plainPassword, user.password);
+      console.log(`   Password test for ${userData.email}: ${isValid ? '✓ WORKING' : '✗ FAILED'}`);
+      console.log(`   Use: ${userData.email} / ${userData.plainPassword}\n`);
     }
     
     // List all users
     console.log('\n📋 All Users in Database:');
     console.log('═══════════════════════════════════════════════════════════');
-    const allUsers = await User.find({}).select('name email role department');
+    const allUsers = await User.find({}).select('name email role');
     allUsers.forEach(user => {
-      console.log(`${user.name.padEnd(20)} | ${user.email.padEnd(30)} | ${user.role.padEnd(10)} | ${user.department || 'N/A'}`);
+      console.log(`${user.name.padEnd(20)} | ${user.email.padEnd(30)} | ${user.role}`);
     });
     console.log('═══════════════════════════════════════════════════════════');
     
     console.log('\n🎉 Setup Complete!');
-    console.log('\n🔐 Login Credentials:');
+    console.log('\n🔐 LOGIN CREDENTIALS (COPY THESE):');
     console.log('═══════════════════════════════════════════════');
     console.log('👑 Admin:    admin@taskflow.com     / Admin@123');
     console.log('📊 Manager:  manager@taskflow.com   / Manager@123');
     console.log('👤 User:     user@taskflow.com      / User@123');
     console.log('👁️ Viewer:   viewer@taskflow.com    / Viewer@123');
-    console.log('👑 Admin:    admin@example.com      / your-password');
     console.log('═══════════════════════════════════════════════');
     
     await mongoose.disconnect();
