@@ -18,10 +18,8 @@
 
 | Role       | Email                                               | Password    |
 | ---------- | --------------------------------------------------- | ----------- |
-| 👑 Admin   | [admin@taskflow.com](mailto:admin@taskflow.com)     | Admin@123   |
-| 📊 Manager | [manager@taskflow.com](mailto:manager@taskflow.com) | Manager@123 |
-| 👤 User    | [user@taskflow.com](mailto:user@taskflow.com)       | User@123    |
-| 👁️ Viewer | [viewer@taskflow.com](mailto:viewer@taskflow.com)   | Viewer@123  |
+|  Admin     | [admin@example.com](mailto:admin@example.com)       | Admin123     |
+
 
 ---
 
