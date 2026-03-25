@@ -244,8 +244,9 @@ const getAnalytics = async (req, res, next) => {
     
     // Apply role-based filtering for analytics
     if (user.role === 'admin') {
-      // Admin sees all tasks
+      // Admin sees ALL tasks in the system
       query = {};
+      console.log('Admin analytics: Showing all tasks in system');
     } else if (user.role === 'manager') {
       // Manager sees own tasks and tasks of managed users
       const managedUsers = await User.find({ managerId: user.id }).select('_id');
@@ -257,6 +258,7 @@ const getAnalytics = async (req, res, next) => {
           { createdBy: { $in: managedUserIds } }
         ]
       };
+      console.log('Manager analytics: Showing own and managed tasks');
     } else {
       // User and Viewer see only their tasks
       query = {
@@ -265,10 +267,13 @@ const getAnalytics = async (req, res, next) => {
           { assignedTo: user.id }
         ]
       };
+      console.log('User analytics: Showing personal tasks');
     }
     
-    // Get all tasks for the user
-    const tasks = await Task.find(query);
+    // Get all tasks for the user based on query
+    const tasks = await Task.find(query)
+      .populate('createdBy', 'name email')
+      .populate('assignedTo', 'name email');
     
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(task => task.status === 'Done').length;
@@ -293,8 +298,10 @@ const getAnalytics = async (req, res, next) => {
     
     // Tasks due soon (next 7 days)
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);
+    nextWeek.setHours(23, 59, 59, 999);
     
     const tasksDueSoon = tasks.filter(task => {
       return task.dueDate && 
@@ -303,16 +310,61 @@ const getAnalytics = async (req, res, next) => {
              task.status !== 'Done';
     }).length;
     
+    // Get tasks created in last 7 days for weekly progress
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const nextDate = new Date(date);
+      nextDate.setDate(date.getDate() + 1);
+      
+      const tasksOnDate = tasks.filter(task => {
+        const taskDate = new Date(task.createdAt);
+        return taskDate >= date && taskDate < nextDate;
+      });
+      
+      const completedOnDate = tasksOnDate.filter(task => task.status === 'Done').length;
+      
+      last7Days.push({
+        date: date.toISOString().split('T')[0],
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        created: tasksOnDate.length,
+        completed: completedOnDate,
+        completionRate: tasksOnDate.length > 0 ? (completedOnDate / tasksOnDate.length) * 100 : 0,
+      });
+    }
+    
+    // Get monthly data
+    const monthlyData = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    
+    months.forEach((month, index) => {
+      const monthTasks = tasks.filter(task => {
+        const taskDate = new Date(task.createdAt);
+        return taskDate.getMonth() === index && taskDate.getFullYear() === currentYear;
+      });
+      
+      monthlyData.push({
+        month,
+        tasks: monthTasks.length,
+        completed: monthTasks.filter(t => t.status === 'Done').length,
+      });
+    });
+    
     res.status(200).json({
       success: true,
       analytics: {
         totalTasks,
         completedTasks,
         pendingTasks,
-        completionPercentage,
+        completionPercentage: parseFloat(completionPercentage),
         statusBreakdown,
         priorityBreakdown,
-        tasksDueSoon
+        tasksDueSoon,
+        weeklyProgress: last7Days,
+        monthlyProgress: monthlyData
       }
     });
   } catch (error) {
