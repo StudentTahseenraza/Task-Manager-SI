@@ -32,7 +32,7 @@ const corsOptions = {
   origin: [
     'http://localhost:5173',  // Vite default
     'http://localhost:5000',  // Backend itself
-    'https://task-manager-si-delta.vercel.app',  // Production frontend
+    'https://task-manager-si-iota.vercel.app',  // Production frontend
   ],
   credentials: true,
   optionsSuccessStatus: 200,
