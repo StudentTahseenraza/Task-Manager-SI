@@ -79,7 +79,7 @@
 ## ⚙️ Backend Setup
 
 ```bash
-git clone https://github.com/yourusername/task-management-system.git
+git clone https://github.com/StudentTahseenraza/Task-Manager-SI.git
 cd task-management-backend
 npm install
 ```
