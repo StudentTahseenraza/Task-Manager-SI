@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskService } from '../services/api';
 import { Plus, Search, Filter, X, Sparkles } from 'lucide-react';
@@ -10,6 +11,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Tasks = () => {
+  const location = useLocation();
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -20,6 +22,13 @@ const Tasks = () => {
     page: 1,
     limit: 10,
   });
+  
+  useEffect(() => {
+    if (location.state?.openCreateModal) {
+      setShowForm(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -73,13 +82,16 @@ const Tasks = () => {
       queryClient.invalidateQueries(['analytics']);
       toast.success('Task deleted successfully');
     },
+    onError: (error) => {
+      toast.error(error.response?.data?.error || 'Failed to delete task');
+    },
   });
 
-  const handleSubmit = async (data) => {
+  const handleSubmit = (data) => {
     if (editingTask) {
-      await updateMutation.mutate({ id: editingTask._id, data });
+      updateMutation.mutate({ id: editingTask._id, data });
     } else {
-      await createMutation.mutate(data);
+      createMutation.mutate(data);
     }
   };
 
@@ -102,7 +114,7 @@ const Tasks = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header - Clean gradient */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -135,7 +147,7 @@ const Tasks = () => {
         </div>
       </motion.div>
 
-      {/* Search and Filters - Clean without borders */}
+      {/* Search and Filters */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -246,6 +258,18 @@ const Tasks = () => {
               ? "Try adjusting your filters" 
               : "Get started by creating your first task"}
           </p>
+          {!user?.isViewer && !(filters.search || filters.status || filters.priority) && (
+            <button
+              onClick={() => {
+                setEditingTask(null);
+                setShowForm(true);
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-5 w-5" />
+              Create Your First Task
+            </button>
+          )}
         </motion.div>
       ) : (
         <>
@@ -268,7 +292,7 @@ const Tasks = () => {
             ))}
           </div>
 
-          {/* Pagination - Clean */}
+          {/* Pagination */}
           {pagination && pagination.pages > 1 && (
             <div className="flex justify-center gap-2 mt-8">
               <button
@@ -303,6 +327,7 @@ const Tasks = () => {
               setShowForm(false);
               setEditingTask(null);
             }}
+            isLoading={createMutation.isPending || updateMutation.isPending}
           />
         )}
       </AnimatePresence>
