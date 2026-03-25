@@ -41,11 +41,12 @@ const getTasks = async (req, res, next) => {
     let query = {};
     const user = req.user;
     
-    if (user.role === 'admin') {
-      // Admin can see all tasks
-      if (view === 'my') {
-        query = { createdBy: user.id };
-      }
+    if (user.role === 'admin' && view === 'all') {
+      // Admin can see ALL tasks when view=all is specified
+      query = {};
+    } else if (user.role === 'admin') {
+      // Admin sees their own tasks by default
+      query = { createdBy: user.id };
     } else if (user.role === 'manager') {
       // Manager can see their own tasks and tasks of users they manage
       const managedUsers = await User.find({ managerId: user.id }).select('_id');
